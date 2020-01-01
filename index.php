@@ -28,10 +28,15 @@
         return result;
         }
 
-        var src = "/home/titus/tst2/testavi.avi"
+        var src = "testavi.avi"
+
+        var urlAPI = "http://127.0.0.1:5000/"
 
         var video= videojs('video');
 
+        var killerTimeout = 10;
+
+        let id = makeid(10)
 
         // hack duration
         video.duration= function() { return video.theDuration; };
@@ -45,22 +50,27 @@
             }
             video.start= time;
             video.oldCurrentTime(0);
-            var id = makeid(10)
+            id = makeid(10)
             video.pause()
             //video.load()
-            $.get("script/transcode.php?src=" + src + "&ss=" + time + "&id=" + id)
+            $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/" + time + "/" + id)
             video.src("hls/" + id + ".m3u8");
             video.play();
         };
-        $.get('script/duration.php?src=' + src, function(rep){
+        $.get(urlAPI + 'duration/' + encodeURIComponent(src), function(rep){
           video.theDuration= parseInt(rep);
         })
-        var id = makeid(10)
-        $.get("script/transcode.php?src=" + src + "&ss=0&id=" + id)
+        $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/0/" + id)
         setTimeout(function () {
           video.src("hls/" + id + ".m3u8");
           video.play();
         }, 1000);
 
+        function keepAlive() {
+          $.get(urlAPI + 'keepalive/' + id)
+          setTimeout(keepAlive, killerTimeout*1000)
+        }
+
+        keepAlive()
     </script>
 </body>
