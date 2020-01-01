@@ -2,16 +2,10 @@
 <html>
 <head>
   <link href="lib/video-js.css" rel="stylesheet">
-
-  <!--
-    -- Include video.js and videojs-contrib-hls in your page
-    -->
-
   <script src="lib/video.js"></script>
   <script src="lib/videojs-flash.js"></script>
   <script src="lib/videojs-contrib-hls.js"></script>
-
-    <script src="lib/jquery-1.9.1.min.js"></script>
+  <script src="lib/jquery-1.9.1.min.js"></script>
 </head>
 <body>
     <video-js id="video" class="video-js vjs-default-skin" controls preload="auto" width="640" height="264">

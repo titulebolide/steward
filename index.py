@@ -8,6 +8,7 @@ import signal
 from urllib.parse import unquote
 from flask import Flask
 from flask_cors import CORS, cross_origin
+import copy
 
 killerTimeout = 10
 
@@ -32,6 +33,8 @@ class Worker(Thread):
         if self.pid is None:
             return
         subprocess.call("pkill --parent " + str(self.pid), shell=True)
+        time.sleep(1)
+        subprocess.call("cd hls ; rm " + self.id + "*", shell=True)
 
     def keepAlive(self):
         self.ka = time.time()
@@ -54,18 +57,20 @@ class Transcoder(Thread):
     def killWorker(self,id):
         if id in self.workers:
             self.workers[id].kill()
+            self.workers.pop(id)
 
     def run(self):
         while not self.kill:
-            for id, worker in self.workers.items():
-                if time.time() - worker.ka > killerTimeout:
-                    worker.kill()
+            workersCopy = copy.copy(self.workers)
+            for id, worker in workersCopy.items():
+                if time.time() - worker.ka > killerTimeout and id in self.workers:
+                    self.killWorker(id)
             time.sleep(killerTimeout*1.1)
 
     def kill(self):
         self.kill = True
         for id, worker in self.workers.items():
-            worker.kill()
+            self.killWorker(id)
 
 app = Flask(__name__, static_folder="static")
 cors = CORS(app)
@@ -99,15 +104,3 @@ def keepalive(id):
 
 if __name__ == "__main__":
     app.run()
-
-
-"""
-time.sleep(3)
-f = open('../hls/' + id + '.ka', 'r')
-timeLastKA = int(f.readline())
-print("kill")
-
-p_pid = subprocess.check_output(["pidof","ffmpeg"]).split()
-print(p_pid)
-os.kill(int(p_pid[0]), signal.SIGINT)
-"""
