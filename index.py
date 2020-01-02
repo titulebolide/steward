@@ -21,9 +21,7 @@ class Worker(Thread):
         self.pid = None
         self.ka = time.time()
         self.cmd = """
-        cd hls
-        echo "#EXTM3U" >> """+str(id)+""".m3u8
-        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -b:v 1M -g 60 -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
+        ffmpeg -ss """+str(ss)+""" -i storage/"""+str(src)+""" -b:v 1M -g 60 -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
         """
 
     def run(self):
@@ -79,10 +77,14 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 t = Transcoder()
 t.start()
 
-@app.route("/transcode/<path:src>/<ss>/<id>")
+@app.route("/transcode/<path:src>/<ss>/<id>", defaults={"previd": None})
+@app.route("/transcode/<path:src>/<ss>/<id>/<previd>")
 @cross_origin()
-def transcode(src, ss, id):
+def transcode(src, ss, id, previd):
+    subprocess.call("cd hls ; echo '#EXTM3U' >> "+str(id)+".m3u8", shell=True)
     t.createWorker(unquote(src), ss, id)
+    if previd is not None :
+        t.killWorker(previd)
     return id
 
 @app.route("/duration/<path:src>")
@@ -94,7 +96,7 @@ def duration(src):
                              "default=noprint_wrappers=1:nokey=1", full_src],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT)
-    return result.stdout.split(b'.')[0]
+    return result.stdout
 
 @app.route("/keepalive/<id>")
 @cross_origin()

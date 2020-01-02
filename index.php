@@ -44,12 +44,16 @@
             }
             video.start= time;
             video.oldCurrentTime(0);
-            id = makeid(10)
+            var newid = makeid(10)
             video.pause()
             //video.load()
-            $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/" + time + "/" + id)
-            video.src("hls/" + id + ".m3u8");
-            video.play();
+            $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/" + time + "/" + newid + "/" + id)
+            id = newid
+            setTimeout(function () {
+              video.src("hls/" + id + ".m3u8");
+              video.play();
+
+            }, 100);
         };
         $.get(urlAPI + 'duration/' + encodeURIComponent(src), function(rep){
           video.theDuration= parseInt(rep);
@@ -58,7 +62,7 @@
         setTimeout(function () {
           video.src("hls/" + id + ".m3u8");
           video.play();
-        }, 1000);
+        }, 100);
 
         function keepAlive() {
           $.get(urlAPI + 'keepalive/' + id)
