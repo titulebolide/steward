@@ -21,7 +21,8 @@ class Worker(Thread):
         self.pid = None
         self.ka = time.time()
         self.cmd = """
-        ffmpeg -ss """+str(ss)+""" -i storage/"""+str(src)+""" -b:v 1M -g 60 -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
+        cd hls
+        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -b:v 1M -g 60 -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
         """
 
     def run(self):
