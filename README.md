@@ -1,4 +1,4 @@
-# STEWART - On The Fly Transcoder
+# STEWART - Client and Server Integrable Streaming Bundle
 
 Client and Server integrable system to stream video files, na matter their extension.
 It transcodes on the fly the files and serves them to the Client
