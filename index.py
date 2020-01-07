@@ -30,8 +30,11 @@ class Worker(Thread):
         self.ka = time.time()
         self.cmd = """
         cd hls
-        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -preset ultrafast -vcodec libx264 -vprofile baseline -acodec aac -y -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
+        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -copyts -preset ultrafast -vcodec libx264 -vprofile baseline -acodec aac -y -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
         """
+
+    def prepare(self):
+        subprocess.call("cd hls ; echo '#EXTM3U' >> "+str(self.id)+".m3u8", shell=True)
 
     def run(self):
         self.pid = subprocess.Popen(self.cmd, shell=True).pid
@@ -53,9 +56,12 @@ class Transcoder(Thread):
         self.tst = {}
         self.kill = False
 
-    def createWorker(self, src, ss, id):
-        self.workers[id] = Worker(src,ss,id)
-        self.workers[id].start()
+    def createWorker(self, src, ss):
+        idWorker = makeId(15)
+        self.workers[idWorker] = Worker(src,ss, idWorker)
+        self.workers[idWorker].prepare()
+        self.workers[idWorker].start()
+        return idWorker
 
     def keepAliveWorker(self, id):
         if id in self.workers:
@@ -90,12 +96,10 @@ t.start()
 @app.route("/transcode/<path:src>/<ss>/<previd>")
 @cross_origin()
 def transcode(src, ss, previd):
-    id = makeId(10)
-    subprocess.call("cd hls ; echo '#EXTM3U' >> "+str(id)+".m3u8", shell=True)
-    t.createWorker(unquote(src), ss, id)
+    idWorker = t.createWorker(unquote(src), ss)
     if previd is not None :
         t.killWorker(previd)
-    return id
+    return idWorker
 
 @app.route("/duration/<path:src>")
 @cross_origin()
