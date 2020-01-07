@@ -9,8 +9,16 @@ from urllib.parse import unquote
 from flask import Flask
 from flask_cors import CORS, cross_origin
 import copy
+import string
+import random
 
-killerTimeout = 10
+killerTimeout = 15
+
+
+def makeId(stringLength):
+    letters = string.ascii_letters
+    return ''.join(random.choice(letters) for i in range(stringLength))
+
 
 class Worker(Thread):
     def __init__(self, src, ss, id):
@@ -22,7 +30,7 @@ class Worker(Thread):
         self.ka = time.time()
         self.cmd = """
         cd hls
-        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -b:v 1M -g 60 -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
+        ffmpeg -ss """+str(ss)+""" -i ../storage/"""+str(src)+""" -preset ultrafast -vcodec libx264 -vprofile baseline -acodec aac -y -hls_time 2 -hls_list_size 0 -hls_segment_size 500000 """+str(id)+""".m3u8\
         """
 
     def run(self):
@@ -64,7 +72,7 @@ class Transcoder(Thread):
             for id, worker in workersCopy.items():
                 if time.time() - worker.ka > killerTimeout and id in self.workers:
                     self.killWorker(id)
-            time.sleep(killerTimeout*1.1)
+            time.sleep(killerTimeout)
 
     def kill(self):
         self.kill = True
@@ -78,10 +86,11 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 t = Transcoder()
 t.start()
 
-@app.route("/transcode/<path:src>/<ss>/<id>", defaults={"previd": None})
-@app.route("/transcode/<path:src>/<ss>/<id>/<previd>")
+@app.route("/transcode/<path:src>/<ss>", defaults={"previd": None})
+@app.route("/transcode/<path:src>/<ss>/<previd>")
 @cross_origin()
-def transcode(src, ss, id, previd):
+def transcode(src, ss, previd):
+    id = makeId(10)
     subprocess.call("cd hls ; echo '#EXTM3U' >> "+str(id)+".m3u8", shell=True)
     t.createWorker(unquote(src), ss, id)
     if previd is not None :

@@ -30,7 +30,9 @@
 
         var killerTimeout = 10;
 
-        let id = makeid(10)
+        var timeoutValidateTime = 500;
+
+        let id = "";
 
         // hack duration
         video.duration= function() { return video.theDuration; };
@@ -44,25 +46,30 @@
             }
             video.start= time;
             video.oldCurrentTime(0);
-            var newid = makeid(10)
+            newid = makeid(10);
             video.pause()
             //video.load()
-            $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/" + time + "/" + newid + "/" + id)
-            id = newid
+            var timeSave = time
             setTimeout(function () {
-              video.src("hls/" + id + ".m3u8");
-              video.play();
+              if (video.start === time) {
+                $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/" + time + "/" + id, function(rep) {
+                  id = rep
+                  video.src("hls/" + id + ".m3u8");
+                  video.play();
+                })
+              }
+            }, timeoutValidateTime);
 
-            }, 100);
         };
         $.get(urlAPI + 'duration/' + encodeURIComponent(src), function(rep){
           video.theDuration= parseInt(rep);
         })
-        $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/0/" + id)
-        setTimeout(function () {
+
+        $.get(urlAPI + "transcode/" + encodeURIComponent(src) + "/0", function(rep) {
+          id = rep
           video.src("hls/" + id + ".m3u8");
           video.play();
-        }, 100);
+        })
 
         function keepAlive() {
           $.get(urlAPI + 'keepalive/' + id)
