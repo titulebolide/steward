@@ -75,7 +75,6 @@
           $.get(urlAPI + 'keepalive/' + id)
           setTimeout(keepAlive, killerTimeout*1000)
         }
-
-        keepAlive()
+        setTimeout(keepAlive, killerTimeout*1000);
     </script>
 </body>
